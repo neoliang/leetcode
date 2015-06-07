@@ -1,212 +1,72 @@
 class Solution {
 public:
-    struct Pos{
-        Pos():row(0),col(0){}
-        Pos(int r,int c):row(r),col(c){}
-        int row;
-        int col;
-    };
-    struct Board
+    int _n;
+    vector<vector<string>> results;
+
+    bool sameDiag(int row1,int col1,int row2,int col2)
     {
-        int _size ;
-        Board(int s=0)
-        :_size(s)
-        {
-            state.resize(s);
-            for(int i=0;i<state.size();++i)
-            {
-                state[i].resize(s,Empty);
-            }
-            
-        }
-        enum {
-            Empty = '.',
-            HasQueen = 'Q',
-            Danger = 'K',
-        };
-        void Out(ostream& ost)
-        {
-            for(int i = 0;i<state.size();++i)
-            {
-                ost << state[i] << endl;
-            }
-        }
-        static bool eq (const Board&l, const Board& other)
-        {
-            for(int i = 0;i<l.state.size();++i)
-            {
-                if(l.state[i] !=  other.state[i])
-                    return false;
-            }
-            return true;
-        }
-        
-        static bool less(const Board&l,const Board& other)
-        {
-            string a ;
-            string b;
-            for(int i = 0;i<l.state.size();++i)
-            {
-                a += l.state[i];
-                b += other.state[i];
-            }
-            return a < b;
-        }
-        bool operator <(const Board& other)const
-        {
-            return less(*this,other);
-        }
-        
-        vector<string> toStrings()const
-        {
-            vector<string> result;
-            for(int i=0;i<_size;++i)
-            {
-                string row = state[i];
-                for(auto iter = row.begin();iter != row.end();++iter)
-                {
-                    if(*iter == Danger)
-                    {
-                        *iter = Empty;
-                    }
-                }
-                result.push_back(row);
-            }
-            return result;
-        }
-        void updateDanger(int row,int col,bool d= true)
-        {
-            char s = Danger;
-            if(! d)
-            {
-                s = Empty;
-            }
-            for(int i=0;i<_size;++i)
-            {
-                if(i != col){
-                    state[row][i] = s;
-                }
-                if(i != row)
-                {
-                    state[i][col] = s;
-                }
-            }
-            //ld
-            int i = row;
-            int j = col;
-            while(++i<_size && --j >= 0)
-            {
-                state[i][j] = s;
-            }
-            //lu
-            i = row;
-            j = col;
-            while(--i >= 0 && --j >= 0)
-            {
-                state[i][j] = s;
-            }
-            //rd
-            i = row;
-            j = col;
-            while(++i<_size && ++j < _size)
-            {
-                state[i][j] = s;
-            }
-            //ru
-            i = row;
-            j = col;
-            while(--i >=0 && ++j < _size)
-            {
-                state[i][j] = s;
-            }
-            
-        }
-        bool putQueen(int row,int col)
-        {
-            if(state[row][col]==Empty)
-            {
-                state[row][col] = HasQueen;
-                updateDanger(row,col);
+        return abs(row1-row2) == abs(col1 - col2);
+    }
+    bool sameDiags(int maxRow,const std::vector<int>& xs)
+    {
+        for (int i=0; i<maxRow; ++i) {
+            if (sameDiag(i, xs[i], maxRow, xs[maxRow])) {
                 return true;
             }
-            return false;
         }
-        bool rmQueen(int row,int col)
-        {
-            if(state[row][col]==HasQueen)
-            {
-                state[row][col] = Empty;
-                updateDanger(row,col,false);
-                return true;
-            }
-            return false;
+        return false;
+    }
+    void prem(unsigned i,std::vector<int> xs)
+    {
+        if (i >=_n) {
+            std::vector<string> rows;
+            toString(xs, rows);
+            results.push_back(rows);
         }
-        
-        vector<Pos> AllEmptyPosAtRow(int row)const
+        else
         {
-            vector<Pos> emptyPoses;
-            for(int j = 0;j<state[row].size();++j)
-            {
-                if(state[row][j]==Empty)
-                {
-                    emptyPoses.push_back(Pos(row,j));
+            for (unsigned int j =i; j<xs.size(); ++j) {
+                std::swap(xs[i], xs[j]);
+                if (!sameDiags(i, xs)) {
+                    
+                    prem(i+1, xs);
+                    
                 }
-            }
-            return emptyPoses;
-        }
-        vector<Pos> AllEmptyPos() const
-        {
-            vector<Pos> emptyPoses;
-            for(int i = 0;i<state.size();++i)
-            {
-                for(int j = 0;j<state[i].size();++j)
-                {
-                    if(state[i][j]==Empty)
-                    {
-                        emptyPoses.push_back(Pos(i,j));
-                    }
-                }
+                std::swap(xs[i], xs[j]);
                 
             }
-            return emptyPoses;
         }
-        
+    }
 
-    private:
-        vector<string> state;
-    };
-    int _size;
-    stack<Board> _stack;
-    void solve(vector<vector<string>>& results,int layer =0)
+    void queens()
     {
-        if(layer >= _size)
-        {
-            results.push_back(_stack.top().toStrings());
-            return;
+        std::vector<int> can;
+        for (int i =1; i<=_n; ++i) {
+            can.push_back(i);
         }
-        
-        
-        
-        vector<Pos> emptyPoses = _stack.top().AllEmptyPosAtRow(layer);
-        for(auto iter = emptyPoses.begin();iter != emptyPoses.end();++iter)
-        {
-            Board next = _stack.top();
-            next.putQueen(iter->row, iter->col);
-            _stack.push(next);
-            solve(results,layer+1);
-            _stack.pop();
-            
-        }
-        
+        prem(0, can);
     }
+    void toString(std::vector<int>& ls,vector<string>& rows)
+    {
+        for (int row=0; row<ls.size(); ++row) {
+            std::string rowStr;
+            for (int col=0; col<ls.size(); ++col) {
+                if (ls[row] == col +1 ) {
+                    rowStr.push_back('Q');
+                }
+                else
+                {
+                    rowStr.push_back('.');
+                }
+            }
+            rows.push_back(rowStr);
+        }
+    }
+
     vector<vector<string> > solveNQueens(int n) {
-        vector<vector<string>> results;
-        _stack = stack<Board>();
-        _stack.push(Board(n));
-        _size = n;
-        solve(results);
+        results.clear();
+        _n = n;
+        queens();
         return results;
-        
     }
-    
 };
